@@ -24,29 +24,46 @@ font_name = args.name
 
 # inclusive unicode code point intervals
 # must not overlap and be in ascending order
-intervals = [
-    (32, 126),
-    (160, 255),
+intervals_custom = [
+    # custom (meteocon)
+    (33, 43),
+    (48, 57),
+    (65, 90),
+]
+
+intervals_basic = [
+    # custom (general use)
+    (32, 126), # standard
+    (176, 177), # deg symbol, +/-
+#    (0x1F600, 0x1F607), # emoji
+#    (0x1F600, 0x1F64F), # emoji
+]
+
+intervals = intervals_basic
+#intervals = [
+    # basic
+#    (32, 126),
+#    (160, 255),
     # punctuation
-    (0x2010, 0x205F),
+#    (0x2010, 0x205F),
     # arrows
-    (0x2190, 0x21FF),
+#    (0x2190, 0x21FF),
     # math
     #(0x2200, 0x22FF),
     # symbols
-    (0x2300, 0x23FF),
+#    (0x2300, 0x23FF),
     # box drawing
     #(0x2500, 0x259F),
     # geometric shapes
-    (0x25A0, 0x25FF),
+#    (0x25A0, 0x25FF),
     # misc symbols
-    (0x2600, 0x26F0),
-    (0x2700, 0x27BF),
+#    (0x2600, 0x26F0),
+#    (0x2700, 0x27BF),
     # powerline symbols
     #(0xE0A0, 0xE0A2),
     #(0xE0B0, 0xE0B3),
     #(0x1F600, 0x1F680),
-]
+#]
 
 add_ints = []
 if args.additional_intervals:
@@ -126,7 +143,8 @@ for i_start, i_end in intervals:
         all_glyphs.append((glyph, compressed))
 
 # pipe seems to be a good heuristic for the "real" descender
-face = load_glyph(ord('|'))
+#face = load_glyph(ord('|'))
+face = load_glyph(ord('A'))
 
 glyph_data = []
 glyph_props = []
@@ -145,22 +163,22 @@ for c in chunks(glyph_data, 16):
     print ("    " + " ".join(f"0x{b:02X}," for b in c))
 print ("};");
 
-print(f"const EpdGlyph {font_name}Glyphs[] = {{")
+print(f"const GFXglyph {font_name}Glyphs[] = {{")
 for i, g in enumerate(glyph_props):
     print ("    { " + ", ".join([f"{a}" for a in list(g[:-1])]),"},", f"// {chr(g.code_point) if g.code_point != 92 else '<backslash>'}")
 print ("};");
 
-print(f"const EpdUnicodeInterval {font_name}Intervals[] = {{")
+print(f"const UnicodeInterval {font_name}Intervals[] = {{")
 offset = 0
 for i_start, i_end in intervals:
     print (f"    {{ 0x{i_start:X}, 0x{i_end:X}, 0x{offset:X} }},")
     offset += i_end - i_start + 1
 print ("};");
 
-print(f"const EpdFont {font_name} = {{")
-print(f"    {font_name}Bitmaps,")
-print(f"    {font_name}Glyphs,")
-print(f"    {font_name}Intervals,")
+print(f"const GFXfont {font_name} = {{")
+print(f"    (uint8_t*) {font_name}Bitmaps,")
+print(f"    (GFXglyph*) {font_name}Glyphs,")
+print(f"    (UnicodeInterval*) {font_name}Intervals,")
 print(f"    {len(intervals)},")
 print(f"    {1 if compress else 0},")
 print(f"    {norm_ceil(face.size.height)},")
